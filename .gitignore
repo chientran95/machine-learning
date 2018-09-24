@@ -1,0 +1,6 @@
+notMNIST*
+.DS_Store
+.ipynb_checkpoints
+*.zip
+*.tar.gz
+*.tar
