@@ -1,4 +1,6 @@
 import os
+import time
+import shutil
 import tensorflow as tf
 from tensorflow.keras import layers
 
@@ -9,18 +11,21 @@ import matplotlib.pyplot as plt
 from model import DepthEstimationModel
 from data_generator import DataGenerator
 
+
 tf.random.set_seed(123)
 
-annotation_folder = "/dataset/"
+annotation_folder = "/datasets/"
 if not os.path.exists(os.path.abspath(".") + annotation_folder):
+    os.makedirs(os.path.abspath(".") + annotation_folder)
     annotation_zip = tf.keras.utils.get_file(
         "val.tar.gz",
         cache_subdir=os.path.abspath("."),
         origin="http://diode-dataset.s3.amazonaws.com/val.tar.gz",
         extract=True,
     )
+    shutil.move('./val', os.path.abspath(".") + annotation_folder + 'val')
 
-path = "val/indoors"
+path = os.path.abspath(".") + annotation_folder + 'val/indoors'
 
 filelist = []
 
@@ -41,7 +46,7 @@ df = df.sample(frac=1, random_state=42)
 HEIGHT = 256
 WIDTH = 256
 LR = 0.0002
-EPOCHS = 30
+EPOCHS = 100
 BATCH_SIZE = 32
 
 def visualize_depth_map(samples, test=False, model=None):
@@ -67,25 +72,27 @@ def visualize_depth_map(samples, test=False, model=None):
 visualize_samples = next(
     iter(DataGenerator(data=df, batch_size=6, dim=(HEIGHT, WIDTH)))
 )
-visualize_depth_map(visualize_samples)
+def sample_vis():
+    visualize_depth_map(visualize_samples)
 
-depth_vis = np.flipud(visualize_samples[1][1].squeeze())  # target
-img_vis = np.flipud(visualize_samples[0][1].squeeze())  # input
+def pointcloud_vis():
+    depth_vis = np.flipud(visualize_samples[1][1].squeeze())  # target
+    img_vis = np.flipud(visualize_samples[0][1].squeeze())  # input
 
-fig = plt.figure(figsize=(15, 10))
-ax = plt.axes(projection="3d")
+    fig = plt.figure(figsize=(15, 10))
+    ax = plt.axes(projection="3d")
 
-STEP = 3
-for x in range(0, img_vis.shape[0], STEP):
-    for y in range(0, img_vis.shape[1], STEP):
-        ax.scatter(
-            [depth_vis[x, y]] * 3,
-            [y] * 3,
-            [x] * 3,
-            c=tuple(img_vis[x, y, :3] / 255),
-            s=3,
-        )
-    ax.view_init(45, 135)
+    STEP = 3
+    for x in range(0, img_vis.shape[0], STEP):
+        for y in range(0, img_vis.shape[1], STEP):
+            ax.scatter(
+                [depth_vis[x, y]] * 3,
+                [y] * 3,
+                [x] * 3,
+                c=tuple(img_vis[x, y, :3] / 255),
+                s=3,
+            )
+        ax.view_init(45, 135)
 
 optimizer = tf.keras.optimizers.Adam(
     learning_rate=LR,
@@ -110,21 +117,17 @@ model.fit(
     epochs=EPOCHS,
     validation_data=validation_loader,
 )
+ts = time.time()
+model.save('checkpoint/model_{}'.format(ts))
 
-test_loader = next(
-    iter(
-        DataGenerator(
-            data=df[265:].reset_index(drop="true"), batch_size=6, dim=(HEIGHT, WIDTH)
-        )
-    )
-)
-visualize_depth_map(test_loader, test=True, model=model)
+# test_loader = next(
+#     iter(DataGenerator(data=df[265:].reset_index(drop="true"),
+#                        batch_size=6, dim=(HEIGHT, WIDTH)))
+# )
+# visualize_depth_map(test_loader, test=True, model=model)
 
-test_loader = next(
-    iter(
-        DataGenerator(
-            data=df[300:].reset_index(drop="true"), batch_size=6, dim=(HEIGHT, WIDTH)
-        )
-    )
-)
-visualize_depth_map(test_loader, test=True, model=model)
+# test_loader = next(
+#     iter(DataGenerator(data=df[300:].reset_index(drop="true"),
+#                        batch_size=6, dim=(HEIGHT, WIDTH)))
+# )
+# visualize_depth_map(test_loader, test=True, model=model)
