@@ -118,7 +118,7 @@ model.fit(
     validation_data=validation_loader,
 )
 ts = time.time()
-model.save('checkpoint/model_{}'.format(ts))
+model.save('saved_models/model_{}'.format(ts))
 
 # test_loader = next(
 #     iter(DataGenerator(data=df[265:].reset_index(drop="true"),
