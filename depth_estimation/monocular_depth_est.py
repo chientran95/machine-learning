@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 
 from model import DepthEstimationModel
 from data_generator import DataGenerator
+from utils import visualize_depth_map
 
 
 tf.random.set_seed(123)
@@ -48,26 +49,6 @@ WIDTH = 256
 LR = 0.0002
 EPOCHS = 100
 BATCH_SIZE = 32
-
-def visualize_depth_map(samples, test=False, model=None):
-    input, target = samples
-    cmap = plt.cm.jet
-    cmap.set_bad(color="black")
-
-    if test:
-        pred = model.predict(input)
-        fig, ax = plt.subplots(6, 3, figsize=(50, 50))
-        for i in range(6):
-            ax[i, 0].imshow((input[i].squeeze()))
-            ax[i, 1].imshow((target[i].squeeze()), cmap=cmap)
-            ax[i, 2].imshow((pred[i].squeeze()), cmap=cmap)
-
-    else:
-        fig, ax = plt.subplots(6, 2, figsize=(50, 50))
-        for i in range(6):
-            ax[i, 0].imshow((input[i].squeeze()))
-            ax[i, 1].imshow((target[i].squeeze()), cmap=cmap)
-
 
 visualize_samples = next(
     iter(DataGenerator(data=df, batch_size=6, dim=(HEIGHT, WIDTH)))
@@ -119,15 +100,3 @@ model.fit(
 )
 ts = time.time()
 model.save('saved_models/model_{}'.format(ts))
-
-# test_loader = next(
-#     iter(DataGenerator(data=df[265:].reset_index(drop="true"),
-#                        batch_size=6, dim=(HEIGHT, WIDTH)))
-# )
-# visualize_depth_map(test_loader, test=True, model=model)
-
-# test_loader = next(
-#     iter(DataGenerator(data=df[300:].reset_index(drop="true"),
-#                        batch_size=6, dim=(HEIGHT, WIDTH)))
-# )
-# visualize_depth_map(test_loader, test=True, model=model)
