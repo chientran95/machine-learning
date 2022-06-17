@@ -4,7 +4,7 @@ import tensorflow as tf
 
 
 class DataGenerator(tf.keras.utils.Sequence):
-    def __init__(self, data, batch_size=6, dim=(768, 1024), n_channels=3, shuffle=True):
+    def __init__(self, data, batch_size=6, dim=(768, 1024), n_channels=3, shuffle=True, is_test=False):
         """
         Initialization
         """
@@ -14,6 +14,7 @@ class DataGenerator(tf.keras.utils.Sequence):
         self.n_channels = n_channels
         self.batch_size = batch_size
         self.shuffle = shuffle
+        self.isTest = is_test
         self.min_depth = 0.1
         self.on_epoch_end()
 
@@ -28,9 +29,12 @@ class DataGenerator(tf.keras.utils.Sequence):
         index = self.indices[index * self.batch_size : (index + 1) * self.batch_size]
         # Find list of IDs
         batch = [self.indices[k] for k in index]
-        x, y = self.data_generation(batch)
-
-        return x, y
+        if not self.isTest:
+            x, y = self.data_generation(batch)
+            return x, y
+        else:
+            img_path, x, y = self.data_generation(batch)
+            return img_path, x, y
 
     def on_epoch_end(self):
 
@@ -68,7 +72,6 @@ class DataGenerator(tf.keras.utils.Sequence):
         return image_, depth_map
 
     def data_generation(self, batch):
-
         x = np.empty((self.batch_size, *self.dim, self.n_channels))
         y = np.empty((self.batch_size, *self.dim, 1))
 
@@ -79,4 +82,7 @@ class DataGenerator(tf.keras.utils.Sequence):
                 self.data["mask"][batch_id],
             )
 
-        return x, y
+        if not self.isTest:
+            return x, y
+        else:
+            return self.data['image'][batch].values, x, y
