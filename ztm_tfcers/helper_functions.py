@@ -152,6 +152,14 @@ def create_tensorboard_callback(dir_name, experiment_name):
   print(f"Saving TensorBoard log files to: {log_dir}")
   return tensorboard_callback
 
+def create_model_checkpoint_callback(save_path, model_name):
+  file_path = os.path.join(save_path, model_name)
+  model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
+      filepath=file_path, save_best_only=True, verbose=0
+  )
+  print(f"Saving model checkpoint to: {file_path}")
+  return model_checkpoint_callback
+
 # Plot the validation and training data separately
 import matplotlib.pyplot as plt
 
